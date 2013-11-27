@@ -1,2 +1,2 @@
 all:
-	python learningbias.py
+	python test.py
