@@ -2,26 +2,38 @@
 Simultaneous Perturbation Stochastic Approximation
 '''
 import numpy as np
+import pandas as pd
 
 alpha = 0.05
 c = 1e-3
-momentum_rate = 0.9
+momentum_rate = 0.8
 learning_rate = 1.0
-max_iter = 10
+max_iter = 100
 loss = None
+Qsize = None
 
 
-def delta_gen( p ):
+def delta_gen( ):
     '''
     returns {-1, 1}
     '''
-    return 2 * np.random.randint(low=0, high=2, size=p ) - 1
+    return 2 * np.random.randint(low=0, high=2, size=Qsize ) - 1
 
-def SPSAk( Lold, Qold, learning_rate ):
-    d = delta_gen( p )
-    L1 = loss( Qold + c * d )
-    L2 = loss( Qold - c * d )
+def SPSAk(params={}):
+
+    p = params.copy()
+    Lold          = p['Lold']
+    Qold          = p['Qold']
+    dQold         = p['dQold']
+    learning_rate = p['learning_rate']
+
+    d    = delta_gen()
+    L1   = loss( Qold + c * d )
+    L2   = loss( Qold - c * d )
     grad = (L1 - L2) / ( 2*c*d )
+
+    if( p['fail_count'] >= 3 ):
+        dQold *= 0.0
 
     dQnew = momentum_rate * dQold - learning_rate * grad
 
@@ -33,21 +45,48 @@ def SPSAk( Lold, Qold, learning_rate ):
         Lold = Lnew
         Qold = Qnew
         learning_rate = (1+alpha) * learning_rate
+        p['fail_count'] = 0
     else:
-        learning_rate = (1-alpha) * learning_rate
+        learning_rate = 0.1  * learning_rate
+        p['fail_count'] += 1
 
-    return ( Lnew, Qnew, learning_rate )
+
+    p['Lnew']          = Lnew
+    p['Qnew']          = Qnew
+    p['Lold']          = Lold
+    p['Qold']          = Qold
+    p['dQold']         = dQnew
+    p['learning_rate'] = learning_rate
+    return p
 
 def constraints( Q ):
-    pass
+    return Q
 
 def run( Q0 ):
+    global Qsize
+    Qsize = Q0.size
     sol = [0] * max_iter
-    sol[0] = ( loss(Q0), Q0, learning_rate )
-    for i in xrange( max_iter ):
-        sol[i] = SPSAk( *sol[i-1] )
-    return sol
+    init = {'Lold' : loss(Q0),
+            'Qold' : Q0,
+            'Qnew' : Q0,
+            'dQold': np.zeros(Qsize),
+            'fail_count' : 0,
+            'learning_rate' : learning_rate }
+    sol[0] = init
+    for i in xrange( 1, max_iter ):
+        sol[i] = SPSAk( sol[i-1] )
 
+    return pd.DataFrame( sol )
 
+def learn_c():
+    c = 1e-3 * np.ones( Qsize )
+    d = np.zeros_like( c )
+    for i in xrange( Qsize ):
+        idx.fill( 0 )
+        idx[i] = 1
+        L1 = loss( Q0 + c[i] * d )
+        L2 = loss( Q0 - c[i] * d )
 
+        dL = L2 - L1
+        print dL
 
