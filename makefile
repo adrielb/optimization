@@ -1,2 +1,2 @@
 all:
-	python test.py
+	python -W ignore::DeprecationWarning test_spsa_irprop.py
