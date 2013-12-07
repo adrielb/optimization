@@ -13,34 +13,43 @@ def SPSA( Q, d1, d2 ):
 
 def SPSAsign( Q ):
     d = [
-        SPSA( Q, d1, d2)
+        np.sign( SPSA( Q, d1, d2) )
         for d1 in [-1, 1]
         for d2 in [-1, 1]
     ]
-    print Q
-    d.insert(0,  loss(Q) )
     return d
 
-
-a = np.array( [ [ (q1, q2, np.array( [q1, q2] ) )
-  for q1 in np.linspace(-6,6,10) ]
-  for q2 in np.linspace(-6,6,10) ] )
-
-print a[0,0]
-import sys
-sys.exit(0)
-
-a = np.array( [ [ (q1, q2, SPSAsign( np.array( q1, q2) ) )
-  for q1 in np.linspace(-6,6,100) ]
-  for q2 in np.linspace(-6,6,100) ] )
-
+#import sys
+#sys.exit(0)
+r1 = np.linspace(-6,6,10)
+r2 = np.linspace(-6,6,10)
+a = np.array( [ [ (q1, q2, loss([q1,q2]) )
+        for q1 in r1 ]
+        for q2 in r2 ] )
 x  = a[:,:,0]
 y  = a[:,:,1]
-l  = a[:,:,2,0]
-s0 = a[:,:,2,1,0]
-s1 = a[:,:,2,1,1]
+l  = a[:,:,2]
+s  = np.array( [ SPSAsign( Q[0:2] ) for Q in a.reshape(-1, 3) ] )
+print s.shape
+
+s00 = s[:,0,0].reshape( x.shape )
+s01 = s[:,0,1].reshape( x.shape )
+s10 = s[:,1,0].reshape( x.shape )
+s11 = s[:,1,1].reshape( x.shape )
+
 import matplotlib.pyplot as plt
 r = 2
 c = 2
 plt.subplot(r,c,1)
-plt.pcolormesh(x,y,l)
+plt.title( '0 x' )
+plt.pcolormesh(x,y,s00)
+plt.subplot(r,c,2)
+plt.title( '0 y' )
+plt.pcolormesh(x,y,s01)
+plt.subplot(r,c,3)
+plt.title( '1 x' )
+plt.pcolormesh(x,y,s00+s10)
+plt.subplot(r,c,4)
+plt.title( '1 y' )
+plt.pcolormesh(x,y,s11)
+plt.show()
