@@ -3,11 +3,11 @@ import numpy as np
 import SPSA as spsa
 from test_func import *
 
-spsa.alpha_p = 2e-1
-spsa.alpha_n = 5e-1
+spsa.alpha_p = 0.1
+spsa.alpha_n = 0.1
 spsa.learning_rate = 1e-2
 spsa.momentum_rate = 0.1
-spsa.max_iter = 50
+spsa.max_iter = 500
 spsa.loss = test_function
 Q0 = np.array( [-4.5,-3] )
 

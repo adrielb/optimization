@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def test_function( X ):
-    q = np.pi / 5;
-    l1 = 1e0
+    q = np.pi / 4
+    l1 = 1e3
     l2 = 1e-3
     D = np.array( [[l1 , 0],
                    [0  ,l2]] )
@@ -31,4 +31,5 @@ def plot_test_function():
     y = z[:,:,1]
     z = z[:,:,2]
 
+    plt.axes( aspect='equal' )
     plt.pcolormesh(x,y,z)

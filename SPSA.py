@@ -9,7 +9,7 @@ alpha_n = 0.05
 c = 1e-3
 momentum_rate = 0.8
 learning_rate = 1.0
-fail_thres = 3
+fail_thres = 3e3
 max_iter = 100
 loss = None
 Qsize = None
@@ -45,14 +45,13 @@ def SPSAk(params={}):
 
     if( Lnew < Lold ):
         Lold = Lnew
-        Qold = Qnew
         learning_rate = (1+alpha_p) * learning_rate
         p['fail_count'] = 0
     else:
         learning_rate = (1-alpha_n) * learning_rate
         p['fail_count'] += 1
-Lmin
 
+    Qold = Qnew
     p['Lnew']          = Lnew
     p['Qnew']          = Qnew
     p['Lold']          = Lold
