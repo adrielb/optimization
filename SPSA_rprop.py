@@ -5,30 +5,28 @@ import numpy as np
 import pandas as pd
 
 c  = 1e-3
-eta_plus  = 1.2
+eta_plus  = 1.5
 eta_minus = 0.5
 ddMax = 1e3
-ddMin = 1e-3
+ddMin = 1e-2
+fail_thres = 5
 
 def SPSArprop_minus( params={} ):
+    global ddMin
 
-    p = params.copy()
-    Lnew  = p['Lnew']
-    Lold  = p['Lold']
-    Qnew  = p['Qnew'].copy()
-    Qold  = p['Qold'].copy()
-    Gold  = p['Gnew'].copy()
-    dd= p['dd'].copy()
-    Qold = Qnew
+    p    = params.copy()
+    Lmin = p['Lmin']
+    Lnew = p['Lnew']
+    Qmin = p['Qmin'].copy()
+    Qold = p['Qnew'].copy()
+    Gold = p['Gnew'].copy()
+    dd   = p['dd'].copy()
 
-    if( Lnew < Lold ):
-        Lold = Lnew
+    if p['fail_count'] == fail_thres:
         p['fail_count'] = 0
-    else:
-        p['fail_count'] += 1
-        if p['fail_count'] == 10:
-            dd = 0.5 * dd
-            p['fail_count'] = 0
+        Qold = Qmin
+        ddMin *= 0.5
+        Gold *= 0
 
     d    = delta_gen()
     L1   = loss( Qold + c * d )
@@ -48,12 +46,16 @@ def SPSArprop_minus( params={} ):
     Qnew = constraints( Qnew )
     Lnew = loss( Qnew )
 
-    if Lnew < Lbest:
+    if Lnew < Lmin:
         Lmin = Lnew
         Qmin = Qnew
+        p['fail_count'] = 0
+    else:
+        p['fail_count'] += 1
 
-    p['Lold'] = Lold
+    p['Lmin'] = Lmin
     p['Lnew'] = Lnew
+    p['Qmin'] = Qmin
     p['Qnew'] = Qnew
     p['Qold'] = Qold
     p['dd']   = dd
@@ -61,14 +63,14 @@ def SPSArprop_minus( params={} ):
     p['Gnew'] = Gnew
     return p
 
-def SPSArprop_minus_init( Q0 ):
+def run( Q0 ):
     global Qsize
     Qsize = Q0.size
     sol = [0] * max_iter
     L0 = loss( Q0 )
-    init = {'Lold' : L0,
+    init = {'Lmin' : L0,
             'Lnew' : L0,
-            'Qold' : Q0,
+            'Qmin' : Q0,
             'Qnew' : Q0,
             'Gold' : np.zeros(Qsize),
             'Gnew' : np.zeros(Qsize),
