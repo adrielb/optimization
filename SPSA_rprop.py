@@ -8,8 +8,10 @@ c  = 1e-3
 eta_plus  = 1.5
 eta_minus = 0.5
 ddMax = 1e3
-ddMin = 1e-2
+ddMin = 1e-1
 fail_thres = 5
+momentum_rate = 0.1
+logfile = '/tmp/opt.csv'
 
 def SPSArprop_minus( params={} ):
     global ddMin
@@ -57,31 +59,37 @@ def SPSArprop_minus( params={} ):
     p['Lnew'] = Lnew
     p['Qmin'] = Qmin
     p['Qnew'] = Qnew
-    p['Qold'] = Qold
     p['dd']   = dd
     p['Gold'] = Gold
     p['Gnew'] = Gnew
     return p
 
+import csv
 def run( Q0 ):
     global Qsize
     Qsize = Q0.size
-    sol = [0] * max_iter
     L0 = loss( Q0 )
-    init = {'Lmin' : L0,
-            'Lnew' : L0,
-            'Qmin' : Q0,
-            'Qnew' : Q0,
-            'Gold' : np.zeros(Qsize),
-            'Gnew' : np.zeros(Qsize),
-            'dd'   : np.ones( Qsize ),
-            'fail_count' : 0
+    sol = {'Lmin'       : L0,
+           'Lnew'       : L0,
+           'Qmin'       : Q0,
+           'Qnew'       : Q0,
+           'Gold'       : np.zeros(Qsize),
+           'Gnew'       : np.zeros(Qsize),
+           'dd'         : np.ones( Qsize ),
+           'fail_count' : 0
            }
-    sol[0] = init
-    for i in xrange( 1, max_iter ):
-        sol[i] = SPSArprop_minus( sol[i-1] )
 
-    return pd.DataFrame( sol )
+    with open( logfile, 'w' ) as log:
+        csvwriter = csv.DictWriter( log, sol.keys() )
+        csvwriter.writerow( dict( (k,k) for k in sol.keys() ) )
+        csvwriter.writerow( sol )
+        for i in xrange( 1, max_iter ):
+            sol = SPSArprop_minus( sol )
+            csvwriter.writerow( sol )
+
+def readlog():
+    df = pd.read_csv(logfile)
+    df['Qmin'] = np.array( [float(f.strip('[]').split()) for f in df['Qmin']] )
 
 def delta_gen( ):
     '''

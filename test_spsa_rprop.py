@@ -13,7 +13,7 @@ Q0 = np.array( [-4.6,-3.1] )
 #df = spsa.run(Q0)
 
 
-numruns = 100
+numruns = 1
 
 dfs = [ spsa.run(Q0) for i in xrange( numruns ) ]
 

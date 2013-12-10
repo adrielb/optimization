@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 def test_function( X ):
     q = np.pi / 5
     l1 = 1e-3
-    l2 = 1e0
+    l2 = 1e3
     D = np.array( [[l1 , 0],
                    [0  ,l2]] )
     R = np.array( [[np.cos(q),-np.sin(q)],
