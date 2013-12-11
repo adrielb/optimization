@@ -62,34 +62,56 @@ def SPSArprop_minus( params={} ):
     p['dd']   = dd
     p['Gold'] = Gold
     p['Gnew'] = Gnew
+    p['idx'] += 1
     return p
 
-import csv
-def run( Q0 ):
+def init( Q0 ):
     global Qsize
     Qsize = Q0.size
     L0 = loss( Q0 )
-    sol = {'Lmin'       : L0,
+    return {'Lmin'      : L0,
            'Lnew'       : L0,
            'Qmin'       : Q0,
            'Qnew'       : Q0,
            'Gold'       : np.zeros(Qsize),
            'Gnew'       : np.zeros(Qsize),
            'dd'         : np.ones( Qsize ),
-           'fail_count' : 0
+           'fail_count' : 0,
+           'idx'        : 0
            }
 
-    with open( logfile, 'w' ) as log:
+def init_from_log():
+    df = readlog()
+
+
+def run_df( Q0 ):
+    sol = [0]*max_iter
+    sol[0] = init( Q0 )
+
+    for i in xrange( 1, max_iter ):
+        sol[i] = SPSArprop_minus( sol[i-1] )
+
+    return pd.DataFrame( sol )
+
+import csv
+import os.path
+def run_log( Q0 ):
+    sol = init( Q0 )
+    with open( logfile, 'a' ) as log:
         csvwriter = csv.DictWriter( log, sol.keys() )
-        csvwriter.writerow( dict( (k,k) for k in sol.keys() ) )
-        csvwriter.writerow( sol )
+        if not os.path.isfile( logfile ):
+            csvwriter.writerow( dict( (k,k) for k in sol.keys() ) )
+            csvwriter.writerow( sol )
         for i in xrange( 1, max_iter ):
             sol = SPSArprop_minus( sol )
             csvwriter.writerow( sol )
 
 def readlog():
     df = pd.read_csv(logfile)
-    df['Qmin'] = np.array( [float(f.strip('[]').split()) for f in df['Qmin']] )
+    for col in ['Qmin', 'Qnew', 'Gold', 'Gnew', 'dd' ]:
+        df[col] =pd.Series( [ np.array(
+            [float(f) for f in row.strip('[]').split() ]) for row in df[col]] )
+    return df
 
 def delta_gen( ):
     '''
