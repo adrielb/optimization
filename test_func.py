@@ -1,10 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def test_function( X ):
+def test_function( x ):
     q = np.pi / 5
     l1 = 1e-3
-    l2 = 1e0
+    l2 = 1e-3
+    X = x - np.array( [-1,-1] )
     D = np.array( [[l1 , 0],
                    [0  ,l2]] )
     R = np.array( [[np.cos(q),-np.sin(q)],

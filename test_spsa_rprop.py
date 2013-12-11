@@ -6,16 +6,14 @@ from test_func import *
 reload( spsa )
 #spsa.eta_plus = 1.0
 #spsa.eta_minus= 1.0
-spsa.max_iter = 1000
+spsa.max_iter = 100
 spsa.momentum_rate = 0.5
+spsa.fail_thres = 5
 spsa.loss = test_function
-Q0 = np.array( [-4.6,4.1] )
+Q0 = np.array( [-4.1,4.1] )
 
-spsa.run_log(Q0)
-df = spsa.readlog()
-
-import sys
-sys.exit(0)
+#import sys
+#sys.exit(0)
 
 def multirun():
     numruns = 100
@@ -39,7 +37,11 @@ def multirun():
             #break
 #multirun()
 
-df = spsa.run_df( Q0 )
+#spsa.run_log(Q0)
+spsa.run_log()
+
+#df = spsa.run_df( Q0 )
+df = spsa.readlog()
 
 qn = np.array( df['Qnew'].tolist() ).transpose()
 qm = np.array( df['Qmin'].tolist() ).transpose()

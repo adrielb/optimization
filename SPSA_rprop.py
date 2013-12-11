@@ -3,12 +3,15 @@ SPSA Rprop
 '''
 import numpy as np
 import pandas as pd
+import csv
+import os.path
 
 c  = 1e-3
 eta_plus  = 1.5
 eta_minus = 0.5
 ddMax = 1e3
 ddMin = 1e-1
+ddMin_reduction = 0.5
 fail_thres = 5
 momentum_rate = 0.1
 logfile = '/tmp/opt.csv'
@@ -23,11 +26,12 @@ def SPSArprop_minus( params={} ):
     Qold = p['Qnew'].copy()
     Gold = p['Gnew'].copy()
     dd   = p['dd'].copy()
+    ddMin= p['ddMin']
 
-    if p['fail_count'] == fail_thres:
+    if p['fail_count'] >= fail_thres:
         p['fail_count'] = 0
         Qold = Qmin
-        ddMin *= 0.5
+        ddMin *= ddMin_reduction
         Gold *= 0
 
     d    = delta_gen()
@@ -60,6 +64,7 @@ def SPSArprop_minus( params={} ):
     p['Qmin'] = Qmin
     p['Qnew'] = Qnew
     p['dd']   = dd
+    p['ddMin']= ddMin
     p['Gold'] = Gold
     p['Gnew'] = Gnew
     p['idx'] += 1
@@ -76,13 +81,18 @@ def init( Q0 ):
            'Gold'       : np.zeros(Qsize),
            'Gnew'       : np.zeros(Qsize),
            'dd'         : np.ones( Qsize ),
+           'ddMin'      : ddMin,
            'fail_count' : 0,
            'idx'        : 0
            }
 
 def init_from_log():
+    global Qsize
     df = readlog()
-
+    init = df.iloc[-1].to_dict()
+    Qsize = init['Qmin'].size
+    init['Lmin'] = loss( init['Qmin'] )
+    return init
 
 def run_df( Q0 ):
     sol = [0]*max_iter
@@ -93,13 +103,16 @@ def run_df( Q0 ):
 
     return pd.DataFrame( sol )
 
-import csv
-import os.path
-def run_log( Q0 ):
-    sol = init( Q0 )
-    with open( logfile, 'a' ) as log:
-        csvwriter = csv.DictWriter( log, sol.keys() )
-        if not os.path.isfile( logfile ):
+def run_log( Q0=None ):
+    if Q0 == None:
+        sol = init_from_log()
+        mode = 'a'
+    else:
+        sol = init( Q0 )
+        mode = 'w'
+    with open( logfile, mode ) as log:
+        csvwriter = csv.DictWriter( log, sorted( sol.keys() ) )
+        if Q0 != None:
             csvwriter.writerow( dict( (k,k) for k in sol.keys() ) )
             csvwriter.writerow( sol )
         for i in xrange( 1, max_iter ):
@@ -109,8 +122,9 @@ def run_log( Q0 ):
 def readlog():
     df = pd.read_csv(logfile)
     for col in ['Qmin', 'Qnew', 'Gold', 'Gnew', 'dd' ]:
-        df[col] =pd.Series( [ np.array(
-            [float(f) for f in row.strip('[]').split() ]) for row in df[col]] )
+        df[col] = pd.Series( [ np.array(
+            [float(f) for f in row.strip('[]').split() ]
+        ) for row in df[col]] )
     return df
 
 def delta_gen( ):
