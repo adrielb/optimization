@@ -37,7 +37,12 @@ def multirun():
             #break
 #multirun()
 
-#spsa.run_log(Q0)
+def constraints( Q ):
+    Q[0] = 2
+    return np.clip( Q, 0, 10 )
+
+spsa.constraints = constraints
+spsa.run_log(Q0)
 spsa.run_log()
 
 #df = spsa.run_df( Q0 )

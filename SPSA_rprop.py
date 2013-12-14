@@ -14,6 +14,7 @@ ddMin = 1e-1
 ddMin_reduction = 0.5
 fail_thres = 5
 momentum_rate = 0.1
+max_iter = 10
 logfile = '/tmp/opt.csv'
 
 def SPSArprop_minus( params={} ):
@@ -34,9 +35,12 @@ def SPSArprop_minus( params={} ):
         ddMin *= ddMin_reduction
         Gold *= 0
 
-    d    = delta_gen()
-    L1   = loss( Qold + c * d )
-    L2   = loss( Qold - c * d )
+    d  = delta_gen()
+    Q1 = constraints( Qold + c * d )
+    L1 = loss( Q1 )
+    Q2 = constraints( Qold - c * d )
+    L2 = loss( Q2 )
+
     grad = (L1 - L2) / ( 2*c*d )
 
     Gnew = momentum_rate * Gold + (1-momentum_rate) * grad
@@ -45,7 +49,7 @@ def SPSArprop_minus( params={} ):
     for i in xrange( dd.size ):
         if Gold[i] * Gnew[i] > 0:
             dd[i] = min( eta_plus  * dd[i], ddMax )
-        else:
+        elif Gold[i] * Gnew[i] < 0:
             dd[i] = max( eta_minus * dd[i], ddMin )
 
     Qnew = Qold +  -Gsign * dd
